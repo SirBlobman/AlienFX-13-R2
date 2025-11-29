@@ -16,5 +16,27 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains:annotations:26.0.2-1")
+    implementation("commons-cli:commons-cli:1.11.0")
     implementation("net.codecrete.usb:java-does-usb:1.2.1")
+}
+
+tasks {
+    named<Jar>("jar") {
+        manifest {
+            val manifestDependencies = configurations.runtimeClasspath.get().joinToString(" ") { it.name }
+            attributes["Main-Class"] = "xyz.sirblobman.alienware.Main"
+            attributes["Class-Path"] = manifestDependencies
+        }
+    }
+
+    // build.gradle.kts
+    register<Copy>("copyDependenciesToLibs") {
+        from(configurations.runtimeClasspath)
+        into("${layout.buildDirectory.get()}/libs")
+    }
+
+    named("build") {
+        dependsOn("copyDependenciesToLibs")
+    }
 }

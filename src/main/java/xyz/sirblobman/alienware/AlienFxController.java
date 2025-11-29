@@ -1,9 +1,12 @@
 package xyz.sirblobman.alienware;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import xyz.sirblobman.alienware.codes.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public final class AlienFxController {
     private final AlienFxDriver driver;
@@ -64,46 +67,61 @@ public final class AlienFxController {
         return true;
     }
 
-    public void setColorMorph(Zone zone, BasicColor color1, BasicColor color2) {
-        AlienFxDriver driver = getDriver();
-        byte[] tempoPacket = createSetTempoPacket(30);
-        driver.writePacket(tempoPacket);
-
-        byte[] colorPacket = createMorphColorPacket(1, zone, color1, color2);
-        byte[] loop = createLoopSequencePacket();
-        byte[] execute = createExecutePacket();
-
-        driver.writePacket(colorPacket);
-        driver.writePacket(loop);
-        driver.writePacket(execute);
-    }
-
-    public void setColorSingle(Zone zone, BasicColor color) {
-        AlienFxDriver driver = getDriver();
-        byte[] tempoPacket = createSetTempoPacket(200);
-        driver.writePacket(tempoPacket);
-
-        if (zone == Zone.POWER_BUTTON) {
-            byte[] saveToPacket = createSaveToPacket(PowerState.BATTERY_ON);
-            byte[] colorPacket = createSetColorPacket(1, zone, color);
-            byte[] loop = createLoopSequencePacket();
-
-            driver.writePacket(saveToPacket);
-            driver.writePacket(colorPacket);
-            driver.writePacket(saveToPacket);
-            driver.writePacket(loop);
-
-            byte[] execute = createExecutePacket();
-            driver.writePacket(execute);
+    public void setColorMorph(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color1, @NotNull BasicColor color2) {
+        List<byte[]> commandList = new ArrayList<>();
+        if (slot != null) {
+            commandList.add(createSaveToPacket(slot));
+            commandList.add(createMorphColorPacket(1, zone, color1, color2));
+            commandList.add(createSaveToPacket(slot));
+            commandList.add(createLoopSequencePacket());
         }
 
-        byte[] colorPacket = createSetColorPacket(1, zone, color);
-        byte[] loop = createLoopSequencePacket();
-        byte[] execute = createExecutePacket();
+        commandList.add(createMorphColorPacket(1, zone, color1, color2));
+        commandList.add(createLoopSequencePacket());
+        commandList.add(createExecutePacket());
 
-        driver.writePacket(colorPacket);
-        driver.writePacket(loop);
-        driver.writePacket(execute);
+        AlienFxDriver driver = getDriver();
+        for (byte[] packet : commandList) {
+            driver.writePacket(packet);
+        }
+    }
+
+    public void setColorSingle(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color) {
+        List<byte[]> commandList = new ArrayList<>();
+        if (slot != null) {
+            commandList.add(createSaveToPacket(slot));
+            commandList.add(createSetColorPacket(1, zone, color));
+            commandList.add(createSaveToPacket(slot));
+            commandList.add(createLoopSequencePacket());
+        }
+
+        commandList.add(createSetColorPacket(1, zone, color));
+        commandList.add(createLoopSequencePacket());
+        commandList.add(createExecutePacket());
+
+        AlienFxDriver driver = getDriver();
+        for (byte[] packet : commandList) {
+            driver.writePacket(packet);
+        }
+    }
+
+    public void setColorPulse(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color) {
+        List<byte[]> commandList = new ArrayList<>();
+        if (slot != null) {
+            commandList.add(createSaveToPacket(slot));
+            commandList.add(createPulseColorPacket(1, zone, color));
+            commandList.add(createSaveToPacket(slot));
+            commandList.add(createLoopSequencePacket());
+        }
+
+        commandList.add(createPulseColorPacket(1, zone, color));
+        commandList.add(createLoopSequencePacket());
+        commandList.add(createExecutePacket());
+
+        AlienFxDriver driver = getDriver();
+        for (byte[] packet : commandList) {
+            driver.writePacket(packet);
+        }
     }
 
     private byte[] createBasicPacket() {

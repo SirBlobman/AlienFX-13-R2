@@ -9,6 +9,7 @@ The following projects were used as a reference for building this one:
 
 ## Dependencies
 - Java 25
+- [Apache Commons CLI](https://commons.apache.org/proper/commons-cli/)
 - [Java Does USB](https://github.com/manuelbl/JavaDoesUSB)
 - Dell Alienware 13 R2 Laptop
 - USB Device (VID: 0x187C, PID: 0x0527) (Alienware Corporation AW13)
@@ -33,4 +34,28 @@ Once you have created that file, please reload the UDEV rules with the following
 ```shell
 sudo udevadm control --reload
 sudo udevadm trigger
+```
+
+### Usage
+To use this project, please run a Java command.
+```shell
+$ java -jar AlienFX.jar <options>
+```
+
+Make sure to replace "AlienFX.jar" with the actual name of the jar file.
+The list of available options is below.
+
+### Examples
+
+#### List Possible Options
+You can view all available options using the help command.
+```shell
+java -jar AlienFX.jar --help
+```
+
+#### Set keyboard lights to blue
+This will set the entire keyboard to full blue `RGB(0, 0, F)`
+
+```shell
+java -jar AlienFX.jar --set-color --zone KEYBOARD_ALL --color 0,0,F
 ```
