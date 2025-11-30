@@ -4,7 +4,6 @@ import net.codecrete.usb.UsbControlTransfer;
 import net.codecrete.usb.UsbDevice;
 import net.codecrete.usb.UsbRecipient;
 import net.codecrete.usb.UsbRequestType;
-import net.codecrete.usb.linux.LinuxUsbDevice;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
