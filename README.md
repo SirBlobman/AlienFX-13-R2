@@ -9,8 +9,9 @@ The following projects were used as a reference for building this one:
 
 ## Dependencies
 - Java 25
-- [Apache Commons CLI](https://commons.apache.org/proper/commons-cli/)
+- [PicoCLI](https://picocli.info/)
 - [Java Does USB](https://github.com/manuelbl/JavaDoesUSB)
+- [Google GSON](https://github.com/google/gson)
 - Dell Alienware 13 R2 Laptop
 - USB Device (VID: 0x187C, PID: 0x0527) (Alienware Corporation AW13)
 

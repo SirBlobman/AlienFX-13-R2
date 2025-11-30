@@ -1,5 +1,5 @@
 module xyz.sirblobman.alienware {
     requires org.jetbrains.annotations;
-    requires org.apache.commons.cli;
+    requires info.picocli;
     requires net.codecrete.usb;
 }

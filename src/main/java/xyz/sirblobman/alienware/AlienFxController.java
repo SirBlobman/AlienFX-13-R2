@@ -1,12 +1,17 @@
 package xyz.sirblobman.alienware;
 
+import net.codecrete.usb.Usb;
+import net.codecrete.usb.UsbDevice;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.sirblobman.alienware.codes.*;
+import xyz.sirblobman.alienware.theme.Theme;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 public final class AlienFxController {
     private final AlienFxDriver driver;
@@ -67,7 +72,7 @@ public final class AlienFxController {
         return true;
     }
 
-    public void setColorMorph(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color1, @NotNull BasicColor color2) {
+    public void sendMorphColor(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color1, @NotNull BasicColor color2) {
         List<byte[]> commandList = new ArrayList<>();
         if (slot != null) {
             commandList.add(createSaveToPacket(slot));
@@ -86,7 +91,7 @@ public final class AlienFxController {
         }
     }
 
-    public void setColorSingle(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color) {
+    public void sendSetColor(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color) {
         List<byte[]> commandList = new ArrayList<>();
         if (slot != null) {
             commandList.add(createSaveToPacket(slot));
@@ -105,15 +110,18 @@ public final class AlienFxController {
         }
     }
 
-    public void setColorPulse(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color) {
+    public void sendPulseColor(@NotNull Zone zone, @Nullable PowerState slot, @NotNull BasicColor color, int tempo) {
         List<byte[]> commandList = new ArrayList<>();
         if (slot != null) {
+            commandList.add(createSaveToPacket(slot));
+            commandList.add(createSetTempoPacket(tempo));
             commandList.add(createSaveToPacket(slot));
             commandList.add(createPulseColorPacket(1, zone, color));
             commandList.add(createSaveToPacket(slot));
             commandList.add(createLoopSequencePacket());
         }
 
+        commandList.add(createSetTempoPacket(tempo));
         commandList.add(createPulseColorPacket(1, zone, color));
         commandList.add(createLoopSequencePacket());
         commandList.add(createExecutePacket());
@@ -122,6 +130,10 @@ public final class AlienFxController {
         for (byte[] packet : commandList) {
             driver.writePacket(packet);
         }
+    }
+
+    public void sendTheme(@NotNull Theme theme) {
+        IO.println("Themes are not implemented yet. Please try in a future version.");
     }
 
     private byte[] createBasicPacket() {
@@ -220,5 +232,45 @@ public final class AlienFxController {
         packet[1] = Command.SAVE_NEXT.getCode();
         packet[2] = state.getCode();
         return packet;
+    }
+
+    public static int getDefaultReadyController(Consumer<AlienFxController> callback) {
+        int vendorId = 0x187C; // Alienware Corporation
+        int productId = 0x0527; // AW13 USB Device
+        Optional<UsbDevice> possibleDevice = Usb.findDevice(vendorId, productId);
+        if (possibleDevice.isEmpty()) {
+            IO.println("Failed to find Alienware AW13 USB Device.");
+            return 1;
+        }
+
+        UsbDevice device = possibleDevice.get();
+        IO.println("Successfully found default Alienware AW13 USB Device.");
+        IO.println("Attempting to acquire control...");
+
+        AlienFxDriver driver = new AlienFxDriver(device);
+        driver.acquireControl();
+
+        if (!driver.isControlTaken()) {
+            IO.println("Failed to take control for AlienFX device.");
+            IO.println("Is there another program controlling it?");
+            return 2;
+        }
+
+        AlienFxController controller = new AlienFxController(driver);
+        IO.println("Control of AlienFX device initiated.");
+        IO.println("Sending reset command...");
+        controller.reset(Reset.ALL_TURN_OFF_2);
+
+        IO.println("Waiting for controller to become ready...");
+        if (controller.waitUntilControllerReady()) {
+            IO.println("Running requested command...");
+            callback.accept(controller);
+        }
+
+        IO.println("Releasing control back to OS.");
+        driver.releaseControl();
+
+        IO.println("Exiting with code 0 (success).");
+        return 0;
     }
 }
