@@ -12,6 +12,7 @@ import xyz.sirblobman.alienware.codes.Zone;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -41,7 +42,18 @@ public final class Main {
             CommandLineParser parser = new DefaultParser();
             CommandLine cli = parser.parse(options, args, true);
             println("Parsed Arguments:");
-            println(Arrays.toString(cli.getOptions()));
+
+            println("[");
+            Iterator<Option> iterator = cli.iterator();
+            while(iterator.hasNext()) {
+                Option option = iterator.next();
+                if (cli.hasOption(option)) {
+                    String optionName = option.getLongOpt();
+                    String optionValue = cli.getOptionValue(option);
+                    println(String.format(Locale.US, "%s:%s", optionName, optionValue));
+                }
+            }
+            println("]");
 
             if (cli.hasOption('T')) {
                 String jsonPathString = cli.getOptionValue('T');
@@ -229,8 +241,7 @@ public final class Main {
 
         UsbDevice device = possibleDevice.get();
         println("Successfully found Alienware AW13 USB Device.");
-        println("Attempting to configure colors...");
-        println("Current Mode: SET_ALL_RED");
+        println("Attempting to acquire control...");
 
         AlienFxDriver driver = new AlienFxDriver(device);
         driver.acquireControl();
