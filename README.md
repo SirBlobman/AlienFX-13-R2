@@ -37,7 +37,7 @@ sudo udevadm control --reload
 sudo udevadm trigger
 ```
 
-### Usage
+## Usage
 To use this project, please run a Java command.
 ```shell
 $ java --enable-native-access=ALL-UNNAMED -jar AlienFX.jar <options>
@@ -51,12 +51,12 @@ The list of available options is below.
 #### List Possible Options
 You can view all available options using the help command.
 ```shell
-java --enable-native-access=ALL-UNNAMED -jar AlienFX.jar --help
+java --enable-native-access=ALL-UNNAMED -jar AlienFX.jar help
 ```
 
 #### Set keyboard lights to blue
 This will set the entire keyboard to full blue `RGB(0, 0, F)`
 
 ```shell
-java --enable-native-access=ALL-UNNAMED -jar AlienFX.jar --set-color --zone KEYBOARD_ALL --color 0,0,F
+java --enable-native-access=ALL-UNNAMED -jar AlienFX.jar set-color --zone KEYBOARD_ALL --color 0,0,F
 ```
