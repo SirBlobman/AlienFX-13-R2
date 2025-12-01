@@ -1,7 +1,22 @@
 {
   "BOOT": {
-    "POWER_BUTTON": [
-
-    ]
+    "POWER_BUTTON": {
+      "tempo": 500,
+      "sequences": [
+        {
+          "command": "SET_COLOR",
+          "color": "0,0,F"
+        }
+      ]
+    },
+    "EVERYTHING": {
+      "tempo": 500,
+      "sequences": [
+        {
+          "command": "SET_COLOR",
+          "color": "F,0,0"
+        }
+      ]
+    }
   }
 }

@@ -5,12 +5,12 @@ import net.codecrete.usb.UsbDevice;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.sirblobman.alienware.codes.*;
+import xyz.sirblobman.alienware.theme.Sequence;
+import xyz.sirblobman.alienware.theme.SequenceList;
+import xyz.sirblobman.alienware.theme.SlotData;
 import xyz.sirblobman.alienware.theme.Theme;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 public final class AlienFxController {
@@ -133,7 +133,88 @@ public final class AlienFxController {
     }
 
     public void sendTheme(@NotNull Theme theme) {
-        IO.println("Themes are not implemented yet. Please try in a future version.");
+        List<byte[]> saveCommandList = new ArrayList<>();
+        List<byte[]> normalCommandList = new ArrayList<>();
+        Map<PowerState, SlotData> slotMap = theme.getSlotMap();
+        Set<Map.Entry<PowerState, SlotData>> slotMapEntrySet = slotMap.entrySet();
+        for (Map.Entry<PowerState, SlotData> slotMapEntry : slotMapEntrySet) {
+            PowerState slot = slotMapEntry.getKey();
+            SlotData slotData = slotMapEntry.getValue();
+
+            Map<Zone, SequenceList> zoneMap = slotData.getZoneMap();
+            Set<Map.Entry<Zone, SequenceList>> zoneMapEntrySet = zoneMap.entrySet();
+            for (Map.Entry<Zone, SequenceList> zoneMapEntry : zoneMapEntrySet) {
+                SequenceList sequenceListData = zoneMapEntry.getValue();
+                int tempo = sequenceListData.getTempo();
+                saveCommandList.add(createSaveToPacket(slot));
+                saveCommandList.add(createSetTempoPacket(tempo));
+
+                if (slot == PowerState.BOOT) {
+                    normalCommandList.add(createSetTempoPacket(tempo));
+                }
+
+                Zone zone = zoneMapEntry.getKey();
+                List<Sequence> sequenceList = sequenceListData.getSequenceList();
+
+                int sequenceId = 0;
+                for (Sequence sequence : sequenceList) {
+                    sequenceId++;
+                    Command command = sequence.command();
+                    BasicColor color = sequence.color();
+
+                    switch (command) {
+                        case SET_COLOR -> {
+                            saveCommandList.add(createSaveToPacket(slot));
+                            saveCommandList.add(createSetColorPacket(sequenceId, zone, color));
+                            if (slot == PowerState.BOOT) {
+                                normalCommandList.add(createSetColorPacket(sequenceId, zone, color));
+                            }
+                        }
+
+                        case PULSE_COLOR -> {
+                            saveCommandList.add(createSaveToPacket(slot));
+                            saveCommandList.add(createPulseColorPacket(sequenceId, zone, color));
+                            if (slot == PowerState.BOOT) {
+                                normalCommandList.add(createPulseColorPacket(sequenceId, zone, color));
+                            }
+                        }
+
+                        case MORPH_COLOR -> {
+                            BasicColor color2 = sequence.color2();
+                            if (color2 == null) {
+                                IO.println("Invalid morph command with missing color found in theme. Skipping");
+                                continue;
+                            }
+                            saveCommandList.add(createSaveToPacket(slot));
+                            saveCommandList.add(createMorphColorPacket(sequenceId, zone, color, color2));
+                            if (slot == PowerState.BOOT) {
+                                normalCommandList.add(createMorphColorPacket(sequenceId, zone, color, color2));
+                            }
+                        }
+
+                        default -> IO.println("Invalid command found in theme. Skipping");
+                    }
+                }
+
+                saveCommandList.add(createSaveToPacket(slot));
+                saveCommandList.add(createLoopSequencePacket());
+                if (slot == PowerState.BOOT) {
+                    normalCommandList.add(createLoopSequencePacket());
+                }
+            }
+
+        }
+
+        saveCommandList.add(createPermanentSavePacket());
+        AlienFxDriver driver = getDriver();
+        for (byte[] packet : saveCommandList) {
+            driver.writePacket(packet);
+        }
+
+        normalCommandList.add(createExecutePacket());
+        for (byte[] packet : normalCommandList) {
+            driver.writePacket(packet);
+        }
     }
 
     private byte[] createBasicPacket() {
@@ -227,10 +308,16 @@ public final class AlienFxController {
         return packet;
     }
 
-    private byte[] createSaveToPacket(PowerState state) {
+    private byte[] createSaveToPacket(@NotNull PowerState state) {
         byte[] packet = createBasicPacket();
         packet[1] = Command.SAVE_NEXT.getCode();
         packet[2] = state.getCode();
+        return packet;
+    }
+
+    private byte[] createPermanentSavePacket() {
+        byte[] packet = createBasicPacket();
+        packet[1] = Command.SAVE.getCode();
         return packet;
     }
 

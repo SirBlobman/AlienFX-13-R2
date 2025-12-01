@@ -27,7 +27,18 @@ public final class SetTheme implements Callable<Integer> {
     public Integer call() throws IOException, ThemeParseException {
         Path filePath = this.file.toPath();
         String json = Files.readString(filePath, StandardCharsets.UTF_8);
-        Theme theme = Theme.loadTheme(json);
-        return AlienFxController.getDefaultReadyController(controller -> controller.sendTheme(theme));
+        IO.println("Loading theme from JSON:");
+        IO.println(json);
+
+        try {
+            Theme theme = Theme.loadTheme(json);
+            IO.println("Loaded Theme Data:");
+            IO.println(theme);
+            return AlienFxController.getDefaultReadyController(controller -> controller.sendTheme(theme));
+        } catch (ThemeParseException ex) {
+            IO.println("Failed to load theme. Please correct the errors:");
+            ex.printStackTrace();
+            return 5;
+        }
     }
 }

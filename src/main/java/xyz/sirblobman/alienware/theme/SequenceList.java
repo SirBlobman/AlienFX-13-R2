@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 public final class SequenceList {
     private final int tempo;
@@ -25,5 +26,11 @@ public final class SequenceList {
 
     public void addSequence(@NotNull Sequence sequence) {
         this.sequenceList.add(sequence);
+    }
+
+    @Override
+    public String toString() {
+        String className = getClass().getSimpleName();
+        return String.format(Locale.US, "%s{tempo=%s,sequences=%s}", className, this.tempo, this.sequenceList);
     }
 }
